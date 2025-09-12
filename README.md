@@ -1,2 +1,10 @@
-# latex-templates
-LaTeX templates for articles and presentations
+# LaTeX templates and automation
+
+LaTeX templates for 
+
+- articles 
+- presentations
+
+Automation via
+
+- makefiles
