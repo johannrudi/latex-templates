@@ -1,0 +1,19 @@
+%DIF UNDERLINE PREAMBLE
+\RequirePackage[normalem]{ulem}
+\RequirePackage[dvipsnames]{xcolor}
+\providecommand{\DIFaddtex}[1]{{\protect\color{OliveGreen}\uwave{#1}}}
+\providecommand{\DIFdeltex}[1]{{\protect\color{Red}\sout{#1}}}
+%DIF SAFE PREAMBLE
+\providecommand{\DIFaddbegin}{}
+\providecommand{\DIFaddend}{}
+\providecommand{\DIFdelbegin}{}
+\providecommand{\DIFdelend}{}
+\providecommand{\DIFmodbegin}{}
+\providecommand{\DIFmodend}{}
+%DIF FLOATSAFE PREAMBLE
+\providecommand{\DIFaddFL}[1]{\DIFadd{#1}}
+\providecommand{\DIFdelFL}[1]{\DIFdel{#1}}
+\providecommand{\DIFaddbeginFL}{}
+\providecommand{\DIFaddendFL}{}
+\providecommand{\DIFdelbeginFL}{}
+\providecommand{\DIFdelendFL}{}

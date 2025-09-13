@@ -1,0 +1,22 @@
+%DIF UNDERLINE PREAMBLE
+\RequirePackage[normalem]{ulem}
+\RequirePackage[dvipsnames]{xcolor}
+\RequirePackage{luacolor}
+\RequirePackage{lua-ul}
+\definecolor{ghAdd}{HTML}{E6FFED}\definecolor{ghDel}{HTML}{FFEBE9}
+\providecommand{\DIFaddtex}[1]{{\protect\color{Green!20!black}\highLight[ghAdd]{#1}}}
+\providecommand{\DIFdeltex}[1]{{\protect\color{Gray}\highLight[ghDel]{\sout{#1}}}}
+%DIF SAFE PREAMBLE
+\providecommand{\DIFaddbegin}{}
+\providecommand{\DIFaddend}{}
+\providecommand{\DIFdelbegin}{}
+\providecommand{\DIFdelend}{}
+\providecommand{\DIFmodbegin}{}
+\providecommand{\DIFmodend}{}
+%DIF FLOATSAFE PREAMBLE
+\providecommand{\DIFaddFL}[1]{\DIFadd{#1}}
+\providecommand{\DIFdelFL}[1]{\DIFdel{#1}}
+\providecommand{\DIFaddbeginFL}{}
+\providecommand{\DIFaddendFL}{}
+\providecommand{\DIFdelbeginFL}{}
+\providecommand{\DIFdelendFL}{}

@@ -8,10 +8,22 @@
 # SETTINGS
 # --------------------------------------
 
-# filename of main tex document without extension
+# filename of main document *without* the extension ".tex"
 DOC=main
 
-# pdf compiler and flags
+# latex compiler and flags
+TEXC=latexmk
+# latex compiler flags
+# -pdf          generate PDF directly (instead of DVI) [used below]
+# -pdflatex=""  call a specific backend with specific options [used below]
+# -use-make     call make for generating missing files
+TEXFLAGS=-use-make
+TEXFLAGSFORCE=-f
+TEXFLAGSCLEAN=-C
+
+# pdf compiler
+PDFC=lualatex
+# pdf compiler flags
 # pdflatex and lualatex:
 # -file-line-error  print compiler-like error message in the form
 #                   file:line:error
@@ -21,52 +33,48 @@ DOC=main
 #                           missing file reference and interactively asking you
 #                           for an alternative
 # -shell-escape  run external commands from inside the tex file
-PDFC=pdflatex
 PDFFLAGS=-file-line-error -shell-escape -interaction=nonstopmode -synctex=1
 
-# latex compiler and flags
-# -pdf          generate PDF directly (instead of DVI) [used below]
-# -pdflatex=""  call a specific backend with specific options [used below]
-# -use-make     call make for generating missing files
-TEXC=latexmk
-TEXFLAGS=-use-make
-TEXFLAGSCLEAN=-C
+# filename of handout document
+HANDOUT_DOC=$(DOC)_handout
 
-# suffix for beamer handout
-HANDOUT_SUFFIX=_handout
+# set documents for latexdiff
+DIF_DEL=$(DOC)_prev
+DIF_ADD=$(DOC)
+DIF_DOC=diff
 
-# set arguments for latexdiff
-DOC_DIFF_A=$(DOC)_prev
-DOC_DIFF_B=$(DOC)
-DOC_DIFF=diff
-
+# latexdiff command
+DIF=latexdiff
 # latexdiff flags
-DIFF=latexdiff
-DIFF_PREAMBLE = '\
-\\usepackage{xcolor,soul}\
-\\definecolor{ghGreen}{HTML}{E6FFED}\
-\\definecolor{ghRed}{HTML}{FFEBE9}\
-\\renewcommand{\\DIFadd}[1]{\\sethlcolor{ghGreen}\\hl{\#1}}\
-\\renewcommand{\\DIFdel}[1]{\\sethlcolor{ghRed}\\hl{\\textcolor{black}{\\sout{\#1}}}}\
-'
-DIFF_FLAGS= --flatten
-#--preamble=$(DIFF_PREAMBLE)
+DIF_PREAMBLE=
+ifeq ($(PDFC),lualatex)
+DIF_PREAMBLE=--preamble=lualatex_diff_preamble.tex
+endif
+ifeq ($(PDFC),pdflatex)
+DIF_PREAMBLE=--preamble=pdflatex_diff_preamble.tex
+endif
+DIFFLAGS=--flatten $(DIF_PREAMBLE)
 
 # --------------------------------------
-# GENERAL BUILD RULES
+# DEFAULT RULES
 # --------------------------------------
-
-# You want latexmk to *always* run, because make does not have all the info.
-# Also, include non-file targets (e.g. all, clean) in .PHONY so they are run
-# regardless of any file of the given name existing.
-.PHONY: all pdf $(DOC).pdf
 
 # The first rule in a Makefile is the one executed by default ("make"). It
 # should always be the "all" rule, so that "make" and "make all" are identical.
+.PHONY: all
 all: pdf
 
-# rule to build main document as pdf file
+# rule to build all pdf files
+.PHONY: pdf
 pdf: $(DOC).pdf
+
+# --------------------------------------
+# HELP
+# --------------------------------------
+
+.PHONY: help
+help:
+	echo "TODO useful help message"
 
 # --------------------------------------
 # PRE-PROCESSING
@@ -87,15 +95,15 @@ pdf: $(DOC).pdf
 # MAIN DOCUMENTS
 # --------------------------------------
 
-# build main document
-$(DOC).pdf: $(DOC).tex
+# compile pdf from tex file
+%.pdf: %.tex
 	$(TEXC) $(TEXFLAGS) -pdf -pdflatex="$(PDFC) $(PDFFLAGS)" $<
 
 # build beamer handout
 # Note: %O before $(PDFFLAGS) seems to enable the latexmk option `-jobname=...`
 #       %S is replaced by the filename
 handout: $(DOC).tex
-	$(TEXC) $(TEXFLAGS) -jobname="$(DOC)$(HANDOUT_SUFFIX)" \
+	$(TEXC) $(TEXFLAGS) -jobname="$(HANDOUT_DOC)" \
 		-pdf -pdflatex="$(PDFC) %O $(PDFFLAGS) \
 		'\PassOptionsToClass{handout}{beamer}\input{%S}'" $<
 
@@ -108,17 +116,29 @@ handout: $(DOC).tex
 #   @  execute command silently
 .PHONY: clean
 clean:
-	-$(TEXC) $(TEXFLAGSCLEAN)
-	-$(TEXC) $(TEXFLAGSCLEAN) -jobname="$(DOC)$(HANDOUT_SUFFIX)" $(DOC).tex
-	-rm *.bbl 2>/dev/null || true
-	-rm *.nav *.snm *.spl *.vrb 2>/dev/null || true
-	-rm *.synctex *.synctex.gz 2>/dev/null || true
+	-$(TEXC) $(TEXFLAGSCLEAN) $(DOC).tex
+	-$(TEXC) $(TEXFLAGSCLEAN) -jobname="$(HANDOUT_DOC)" $(DOC).tex
+	-$(RM) *.bbl
+	-$(RM) *.nav *.snm *.spl *.vrb
+	-$(RM) *.synctex *.synctex.gz
 
 # --------------------------------------
-# LATEX DIFF
+# LATEXDIFF
 # --------------------------------------
 
+# generate diff tex file
+$(DIF_DOC).tex: $(DIF_DEL).tex $(DIF_ADD).tex
+	$(DIF) $(DIFFLAGS) $^ > $@
+
+# compile pdf from diff tex file
 .PHONY: diff
-diff:
-	$(DIFF) $(DIFF_FLAGS) $(DOC_DIFF_A).tex $(DOC_DIFF_B).tex > $(DOC_DIFF)
-	$(TEXC) $(TEXFLAGS) -f -pdf -pdflatex="$(PDFC) $(PDFFLAGS)" $(DOC_DIFF)
+diff: $(DIF_DOC).tex
+	$(TEXC) $(TEXFLAGS) $(TEXFLAGSFORCE) -pdf -pdflatex="$(PDFC) $(PDFFLAGS)" $<
+
+.PHONY: cleandiff
+cleandiff:
+	-$(TEXC) $(TEXFLAGSCLEAN) $(DIF_DOC).tex
+	-$(RM) *.bbl
+	-$(RM) *.nav *.snm *.spl *.vrb
+	-$(RM) *.synctex *.synctex.gz
+	$(RM) $(DIF_DOC).tex
